@@ -2,7 +2,7 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <title>เข้าสู่ระบบ - ระบบติดตามงานของผู้อำนวยการสถานศึกษา</title>
+    <title>M - SMART</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- ฟอนต์ -->
@@ -18,50 +18,40 @@
     <script src="app.js" defer></script>
   </head>
   <body class="app-body">
-    <div id="loginPage" class="login-container">
-      <div class="login-box">
-        <div class="logo-placeholder">🏫</div>
+  <div id="loginPage" class="login-container">
+    <div class="login-box">
+      <img src="logo.png" alt="ตราโรงเรียน" class="login-logo" />
 
-        <h1 class="login-title" id="loginSystemTitle">
-          ระบบติดตามงานของผู้อำนวยการสถานศึกษา
-        </h1>
-        <p class="login-subtitle" id="loginSchoolName">
-          โรงเรียนบ้านหนองระแวง
-        </p>
+      <h1 class="login-title" id="loginSystemTitle">
+        M - SMART
+      </h1>
 
-        <form id="loginForm">
-          <div class="form-group">
-            <label for="username">ชื่อผู้ใช้</label>
-            <input type="text" id="username" required />
-          </div>
+      <h2 class="login-subtitle" id="loginSystemsugtitle">
+        ระบบมอบหมายและติดตามงาน
+      </h2>
 
-          <div class="form-group">
-            <label for="password">รหัสผ่าน</label>
-            <input type="password" id="password" required />
-          </div>
+      <p class="login-subtitle" id="loginSchoolName">
+        โรงเรียนบ้านหนองระแวง
+      </p>
 
-          <div class="login-test-accounts">
-            <h4>บัญชีทดสอบ:</h4>
-            <div class="login-test-list">
-              <div><strong>admin / admin123</strong> - ผู้ดูแลระบบ</div>
-              <div><strong>director / dir123</strong> - ผู้อำนวยการ</div>
-              <div>
-                <strong>head1 / head123</strong> - หัวหน้าฝ่ายงบประมาณ
-              </div>
-              <div>
-                <strong>teacher1 / teach123</strong> - ครูฝ่ายงบประมาณ
-              </div>
-            </div>
-          </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">ชื่อผู้ใช้</label>
+          <input type="text" id="username" required />
+        </div>
 
-          <button type="submit" class="login-button">เข้าสู่ระบบ</button>
-        </form>
-      </div>
+        <div class="form-group">
+          <label for="password">รหัสผ่าน</label>
+          <input type="password" id="password" required />
+        </div>
+
+        <button type="submit" class="login-button">เข้าสู่ระบบ</button>
+      </form>
     </div>
+  </div>
 
-    <!-- Toast แจ้งเตือน -->
-    <div id="toast" class="toast">
-      <span id="toastMessage"></span>
-    </div>
-  </body>
+  <div id="toast" class="toast">
+    <span id="toastMessage"></span>
+  </div>
+</body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="th">
   <head>
     <meta charset="UTF-8" />
-    <title>แดชบอร์ด - ระบบติดตามงานของผู้อำนวยการสถานศึกษา</title>
+    <title>แดชบอร์ด - M - SMART</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- ฟอนต์ -->
@@ -22,10 +22,14 @@
     <div id="dashboard" class="dashboard">
       <div class="top-bar">
         <div class="system-info">
-          <h1 id="dashboardSystemTitle">
-            ระบบติดตามงานของผู้อำนวยการสถานศึกษา
-          </h1>
-          <p id="dashboardSchoolName">โรงเรียนบ้านหนองระแวง</p>
+          <img src="logo.png" alt="ตราโรงเรียน" class="top-bar-logo" />
+
+          <div>
+            <h1 id="dashboardSystemTitle">
+              M - SMART
+            </h1>
+            <p id="dashboardSchoolName">โรงเรียนบ้านหนองระแวง</p>
+          </div>
         </div>
 
         <div class="user-info">
@@ -45,8 +49,14 @@
       </div>
 
       <div class="main-content">
-        <h2 class="page-title">แดชบอร์ด</h2>
-        <div class="cards-grid" id="dashboardCards"></div>
+
+        <h3 class="section-title">บอร์ดประชาสัมพันธ์</h3>
+        <div id="dashboardAnnouncements" class="announcements-board">
+          </div>
+
+        <h3 class="section-title">แดชบอร์ด</h3>
+        <div class="cards-grid" id="dashboardCards">
+          </div>
       </div>
     </div>
 

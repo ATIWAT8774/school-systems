@@ -108,6 +108,7 @@ async function loadAllDataAndRefresh() {
   try {
     allData = await apiGetAll();
     updateNotificationCounts();
+    loadDashboardAnnouncements();
 
     // รีเฟรชส่วนที่เปิดอยู่
     const trackModal = document.getElementById("trackTasksModal");
@@ -198,11 +199,14 @@ function showToast(message, type = "success") {
 function initLoginPage() {
   const title = document.getElementById("loginSystemTitle");
   const school = document.getElementById("loginSchoolName");
-  if (title) title.textContent = "ระบบติดตามงานของผู้อำนวยการสถานศึกษา";
+  if (title) title.textContent = "M - SMART"; // <-- แก้ไขเป็น M - SMART
   if (school) school.textContent = "โรงเรียนบ้านหนองระแวง";
+  
+  // เราอาจเพิ่มการตั้งค่า h2 ด้วย (เผื่อไว้)
+  const subtitle = document.getElementById("loginSystemsugtitle");
+  if (subtitle) subtitle.textContent = "ระบบมอบหมายและติดตามงาน";
 
   const form = document.getElementById("loginForm");
-  if (!form) return;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -317,7 +321,7 @@ function initDashboardPage() {
   renderDashboardCards();
 
   // modal close buttons
-  document.querySelectorAll(".close-btn[data-close-modal]").forEach((btn) => {
+  document.querySelectorAll("[data-close-modal]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-close-modal");
       closeModal(id);
@@ -542,6 +546,48 @@ function updateNotificationCounts() {
       titleEl.appendChild(badge);
     }
   }, 100);
+}
+
+
+// =================== DASHBOARD ANNOUNCEMENTS ===================
+
+function loadDashboardAnnouncements() {
+  // ดึงประกาศทั้งหมดมาเรียงตามวันที่ใหม่สุดไปเก่าสุด
+  const announcements = getAllAnnouncements().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const users = getAllUsers();
+  const listEl = document.getElementById("dashboardAnnouncements");
+  if (!listEl) return;
+
+  if (!announcements.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📢</div>
+        <p>ยังไม่มีประกาศ</p>
+      </div>
+    `;
+    return;
+  }
+
+  // แสดงประกาศล่าสุด 5 รายการ
+  const recentAnnouncements = announcements.slice(0, 5);
+
+  listEl.innerHTML = recentAnnouncements
+    .map((a) => {
+      const author = users.find((u) => String(u.id) === String(a.assignedBy));
+      return `
+        <div class="task-card">
+          <div class="task-header">
+            <h4 class="task-title">${a.title}</h4>
+          </div>
+          <p style="color:#666;margin:8px 0;line-height:1.6;">${a.message}</p>
+          <div class="task-meta">
+            <div>โดย: ${author ? author.fullName : "ไม่ระบุ"}</div>
+            <div>วันที่: ${new Date(a.createdAt).toLocaleDateString("th-TH")}</div>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
 }
 
 // =================== MODAL HELPERS ===================

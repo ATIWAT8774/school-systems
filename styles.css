@@ -20,6 +20,14 @@ body {
 
 /* ================== Login ================== */
 
+.login-logo {
+  width: 160px;
+  height: auto;
+  margin: 0 auto 20px;
+  display: block; /* เพื่อให้ margin auto ทำงาน */
+  object-fit: contain; /* เพื่อให้ภาพพอดี ไม่ยืด */
+}
+
 .login-container {
   display: flex;
   justify-content: center;
@@ -63,6 +71,15 @@ body {
   text-align: center;
   color: #66bb6a;
   font-size: 16px;
+  margin-top: 0; /* <-- เพิ่ม: ลบระยะห่างด้านบน */
+  margin-bottom: 4px; /* <-- แก้ไข: ลดระยะห่างด้านล่าง (จาก 30px) */
+}
+
+/* เพิ่มกฎนี้เข้าไปใหม่
+  เพื่อให้ "โรงเรียนบ้านหนองระแวง" (p) 
+  เว้นระยะ 30px ก่อนฟอร์มเหมือนเดิม
+*/
+#loginSchoolName {
   margin-bottom: 30px;
 }
 
@@ -158,6 +175,13 @@ body {
   min-height: 100%;
 }
 
+.top-bar-logo {
+  height: 60px; /* กำหนดความสูงของโลโก้ */
+  width: auto;  /* กำหนดความกว้างของโลโก้ */
+  object-fit: contain; /* ป้องกันภาพบิดเบี้ยว */
+  margin-right: 4px; /* เว้นระยะห่างจากข้อความ */
+}
+
 .top-bar {
   background: #ffffff;
   padding: 16px 24px;
@@ -167,6 +191,11 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.system-info {
+  display: flex;
+  align-items: center;
 }
 
 .system-info h1 {
@@ -901,4 +930,21 @@ body {
   .two-columns {
     grid-template-columns: 1fr;
   }
+}
+
+.section-title {
+  color: #388e3c;
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 32px; /* เว้นระยะห่างด้านบน */
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e8f5e9;
+}
+
+.announcements-board {
+  display: grid;
+  /* จัดเรียงประกาศเป็นคอลัมน์ */
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
 }
