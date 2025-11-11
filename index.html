@@ -43,7 +43,7 @@
 
       <div class="marquee-container">
         <div class="marquee-text" id="marqueeText">
-          ยินดีต้อนรับสู่ระบบติดตามงานของผู้อำนวยการสถานศึกษา
+          ยินดีต้อนรับสู่ระบบมอบหมายและติดตามงาน
           โรงเรียนบ้านหนองระแวง
         </div>
       </div>
@@ -140,24 +140,26 @@
         </div>
 
         <div class="filter-bar">
-          <select id="statusFilter">
-            <option value="">ทุกสถานะ</option>
-            <option value="pending">รอดำเนินการ</option>
-            <option value="in_progress">กำลังดำเนินการ</option>
-            <option value="completed">เสร็จสิ้น</option>
-            <option value="overdue">เกินกำหนด</option>
-          </select>
-
           <select id="departmentFilter">
-            <option value="">ทุกฝ่าย</option>
-            <option value="budget">ฝ่ายงบประมาณ</option>
+            <option value="">เลือกฝ่าย</option> <option value="budget">ฝ่ายงบประมาณ</option>
             <option value="general">ฝ่ายบริหารทั่วไป</option>
             <option value="academic">ฝ่ายวิชาการ</option>
             <option value="personnel">ฝ่ายบุคลากร</option>
           </select>
         </div>
 
-        <div id="tasksList" class="tasks-list"></div>
+        <div id="teacherListContainer" class="teacher-list-container"></div>
+      </div>
+    </div>
+
+    <div id="teacherWorkloadModal" class="modal">
+      <div class="modal-content modal-wide">
+        <div class="modal-header">
+          <h2 class="modal-title" id="teacherWorkloadTitle">ภาระงานของ...</h2>
+          <button class="close-btn" data-close-modal="teacherWorkloadModal">×</button>
+        </div>
+        <div id="teacherWorkloadList" class="tasks-list">
+          </div>
       </div>
     </div>
 
@@ -170,6 +172,18 @@
         </div>
 
         <div id="taskDetailContent"></div>
+
+        <div id="fileLinkArea" class="file-link-area" style="margin-top: 16px;"></div>
+
+        <div id="fileUploadArea" class="file-upload-area" style="margin-top: 20px;">
+          <h4 style="color:#2E7D32;margin-bottom:10px;">ส่งไฟล์งาน (PDF เท่านั้น)</h4>
+          <div class="form-group">
+            <input type="file" id="taskFileInput" accept=".pdf" class="form-control" />
+          </div>
+          <button id="submitFileButton" class="btn btn-primary">อัปโหลดไฟล์</button>
+          <div id="uploadStatus" style="font-size:12px;color:gray;margin-top:8px;"></div>
+        </div>
+
         <div class="button-group" id="taskActions"></div>
       </div>
     </div>
