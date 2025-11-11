@@ -948,3 +948,21 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
 }
+
+/* เพิ่มสไตล์สำหรับ .form-control (ถ้ายังไม่มี) */
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #c8e6c9;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: "Prompt", sans-serif;
+}
+
+/* เพิ่มสไตล์สำหรับช่องอัปโหลด */
+.file-upload-area {
+  background: #f9f9f9;
+  border: 2px dashed #a5d6a7;
+  padding: 16px;
+  border-radius: 8px;
+}
