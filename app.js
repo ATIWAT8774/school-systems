@@ -11,38 +11,6 @@ let allData = [];
 let selectedTeacher = null;
 let isLoading = false;
 
-// บัญชีทดสอบ (จะ auto-create ลงชีตถ้ายังไม่มี)
-const testAccounts = [
-  {
-    username: "admin",
-    password: "admin123",
-    fullName: "ผู้ดูแลระบบ",
-    role: "admin",
-    department: "all",
-  },
-  {
-    username: "director",
-    password: "dir123",
-    fullName: "ผู้อำนวยการ",
-    role: "director",
-    department: "all",
-  },
-  {
-    username: "head1",
-    password: "head123",
-    fullName: "หัวหน้าฝ่ายงบประมาณ",
-    role: "head_budget",
-    department: "budget",
-  },
-  {
-    username: "teacher1",
-    password: "teach123",
-    fullName: "ครูฝ่ายงบประมาณ",
-    role: "teacher_budget",
-    department: "budget",
-  },
-];
-
 // =================== API HELPERS ===================
 
 async function apiGetAll() {
@@ -296,11 +264,11 @@ function initDashboardPage() {
   const school = document.getElementById("dashboardSchoolName");
   const marquee = document.getElementById("marqueeText");
 
-  if (title) title.textContent = "ระบบติดตามงานของผู้อำนวยการสถานศึกษา";
+  if (title) title.textContent = "ระบบมอบหมายและติดตามงาน";
   if (school) school.textContent = "โรงเรียนบ้านหนองระแวง";
   if (marquee)
     marquee.textContent =
-      "ยินดีต้อนรับสู่ระบบติดตามงานของผู้อำนวยการสถานศึกษา โรงเรียนบ้านหนองระแวง";
+      "ยินดีต้อนรับสู่ระบบระบบมอบหมายและติดตามงาน โรงเรียนบ้านหนองระแวง";
 
   // แสดงชื่อ user
   const userNameEl = document.getElementById("currentUserName");
@@ -725,11 +693,9 @@ function wireFormsAndFilters() {
     });
   }
 
-  // filters tasks
-  const statusFilter = document.getElementById("statusFilter");
+// filters tasks
   const depFilter = document.getElementById("departmentFilter");
-  if (statusFilter) statusFilter.addEventListener("change", loadTasks);
-  if (depFilter) depFilter.addEventListener("change", loadTasks);
+  if (depFilter) depFilter.addEventListener("change", loadTeachersForTracking);
 
   // form ประกาศ
   const annForm = document.getElementById("announcementForm");
@@ -891,75 +857,110 @@ function wireFormsAndFilters() {
 
 // =================== TASKS LIST / DETAIL ===================
 
-function loadTasks() {
-  const tasks = getAllTasks();
+// =================== TASKS LIST / DETAIL (โฉมใหม่) ===================
+
+// (แทนที่ loadTasks เดิม)
+function loadTeachersForTracking() {
   const users = getAllUsers();
-  let filtered = tasks;
-
-  // filter by permission
-  if (currentUser.role.startsWith("teacher_")) {
-    filtered = tasks.filter((t) => t.assignedTo == currentUser.id);
-  } else if (currentUser.role.startsWith("head_")) {
-    const deptUsers = users.filter(
-      (u) => getDepartmentFromRole(u.role) === currentUser.department
-    );
-    const deptIds = deptUsers.map((u) => String(u.id));
-    filtered = tasks.filter(
-      (t) => deptIds.includes(String(t.assignedTo)) || t.assignedBy == currentUser.id
-    );
-  }
-
-  const statusFilter = document.getElementById("statusFilter");
+  const tasks = getAllTasks();
+  
   const depFilter = document.getElementById("departmentFilter");
-  const statusValue = statusFilter ? statusFilter.value : "";
   const depValue = depFilter ? depFilter.value : "";
-
-  if (statusValue) {
-    filtered = filtered.filter((t) => {
-      if (statusValue === "overdue") {
-        const deadline = new Date(t.deadline);
-        const now = new Date();
-        return deadline < now && t.status !== "completed";
-      }
-      return t.status === statusValue;
-    });
-  }
-
-  if (depValue) {
-    const deptUsers = users.filter(
-      (u) => getDepartmentFromRole(u.role) === depValue
-    );
-    const deptIds = deptUsers.map((u) => String(u.id));
-    filtered = filtered.filter((t) =>
-      deptIds.includes(String(t.assignedTo))
-    );
-  }
-
-  renderTasks(filtered, users);
-}
-
-function renderTasks(tasks, users) {
-  const listEl = document.getElementById("tasksList");
+  
+  const listEl = document.getElementById("teacherListContainer");
   if (!listEl) return;
 
-  if (!tasks.length) {
+  if (!depValue) {
     listEl.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
-        <p>ไม่พบงานที่ตรงกับเงื่อนไข</p>
+        <div class="empty-state-icon">👥</div>
+        <p>กรุณาเลือกฝ่ายเพื่อแสดงรายชื่อครู</p>
       </div>
     `;
     return;
   }
 
-  const now = new Date();
+  // กรองครูเฉพาะในฝ่ายที่เลือก
+  const teachers = users.filter(
+    (u) => getDepartmentFromRole(u.role) === depValue && u.role.startsWith('teacher_')
+  );
+   const heads = users.filter(
+    (u) => getDepartmentFromRole(u.role) === depValue && u.role.startsWith('head_')
+  );
+  
+  // รวมหัวหน้าและครู
+  const departmentUsers = [...heads, ...teachers];
 
+  if (!departmentUsers.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <p>ไม่พบผู้ใช้ในฝ่ายนี้</p>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = departmentUsers
+    .map((user) => {
+      // นับงานของแต่ละคน
+      const userTasks = tasks.filter((t) => String(t.assignedTo) === String(user.id));
+      const pendingCount = userTasks.filter((t) => t.status !== "completed").length;
+      
+      return `
+        <div class="user-card"> <div class="user-info-card">
+            <div class="user-avatar">${user.fullName.charAt(0)}</div>
+            <div class="user-details-card">
+              <p class="user-name-card">${user.fullName}</p>
+              <p class="user-role-card">${getRoleDisplayName(user.role)}</p>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <button class="btn btn-primary" data-teacher-id="${user.id}" data-teacher-name="${user.fullName}">
+              ดูภาระงาน (${pendingCount}/${userTasks.length})
+            </button>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // เพิ่ม Event Listeners ให้ปุ่ม "ดูภาระงาน"
+  listEl.querySelectorAll("button[data-teacher-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-teacher-id");
+      const name = btn.getAttribute("data-teacher-name");
+      showTeacherWorkload(id, name);
+    });
+  });
+}
+
+// (ฟังก์ชันใหม่)
+function showTeacherWorkload(teacherId, teacherName) {
+  const titleEl = document.getElementById("teacherWorkloadTitle");
+  if (titleEl) titleEl.textContent = `ภาระงานของ: ${teacherName}`;
+
+  const listEl = document.getElementById("teacherWorkloadList");
+  if (!listEl) return;
+
+  const allTasks = getAllTasks();
+  const tasks = allTasks.filter((t) => String(t.assignedTo) === String(teacherId));
+  
+  if (!tasks.length) {
+    listEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <p>ไม่พบงานที่ได้รับมอบหมาย</p>
+      </div>
+    `;
+    openModal("teacherWorkloadModal");
+    return;
+  }
+
+  // (นี่คือ renderTasks เวอร์ชันใหม่ ที่ไม่มี "มอบหมายโดย")
+  const now = new Date();
   listEl.innerHTML = tasks
     .map((task) => {
-      const assignedUser = users.find((u) => String(u.id) === String(task.assignedTo));
-      const assignedByUser = users.find(
-        (u) => String(u.id) === String(task.assignedBy)
-      );
       const deadline = new Date(task.deadline);
       const isOverdue = deadline < now && task.status !== "completed";
 
@@ -985,8 +986,6 @@ function renderTasks(tasks, users) {
           </div>
           <p style="color:#666;margin:8px 0;">${task.description}</p>
           <div class="task-meta">
-            <div>ผู้รับผิดชอบ: ${assignedUser ? assignedUser.fullName : "ไม่ระบุ"}</div>
-            <div>มอบหมายโดย: ${assignedByUser ? assignedByUser.fullName : "ไม่ระบุ"}</div>
             <div>กำหนดส่ง: ${new Date(task.deadline).toLocaleDateString("th-TH")}</div>
             <div>ความสำคัญ: ${getPriorityText(task.priority)}</div>
           </div>
@@ -999,6 +998,8 @@ function renderTasks(tasks, users) {
     const id = el.getAttribute("data-task-id");
     el.addEventListener("click", () => showTaskDetail(id));
   });
+
+  openModal("teacherWorkloadModal");
 }
 
 function showTaskDetail(taskId) {
@@ -1008,9 +1009,7 @@ function showTaskDetail(taskId) {
   if (!task) return;
 
   const assignedUser = users.find((u) => String(u.id) === String(task.assignedTo));
-  const assignedByUser = users.find(
-    (u) => String(u.id) === String(task.assignedBy)
-  );
+  // เราไม่แสดง assignedByUser อีกต่อไป
 
   const deadline = new Date(task.deadline);
   const now = new Date();
@@ -1023,7 +1022,10 @@ function showTaskDetail(taskId) {
 
   const contentEl = document.getElementById("taskDetailContent");
   const actionsEl = document.getElementById("taskActions");
+  const fileLinkEl = document.getElementById("fileLinkArea");
+  const fileUploadEl = document.getElementById("fileUploadArea");
 
+  // 1. Render Content (ลบ "มอบหมายโดย")
   if (contentEl) {
     contentEl.innerHTML = `
       <div style="margin-bottom:20px;">
@@ -1034,7 +1036,6 @@ function showTaskDetail(taskId) {
         <div style="display:grid;gap:12px;">
           <div><strong>สถานะ:</strong> ${statusText}</div>
           <div><strong>ผู้รับผิดชอบ:</strong> ${assignedUser ? assignedUser.fullName : "ไม่ระบุ"}</div>
-          <div><strong>มอบหมายโดย:</strong> ${assignedByUser ? assignedByUser.fullName : "ไม่ระบุ"}</div>
           <div><strong>กำหนดส่ง:</strong> ${deadline.toLocaleDateString("th-TH")}</div>
           <div><strong>ความสำคัญ:</strong> ${getPriorityText(task.priority)}</div>
           <div><strong>วันที่สร้าง:</strong> ${new Date(task.createdAt).toLocaleDateString("th-TH")}</div>
@@ -1049,7 +1050,23 @@ function showTaskDetail(taskId) {
       </div>
     `;
   }
+  
+  // 2. Render File Link (ถ้ามี)
+  if (fileLinkEl) {
+    if (task.fileLink) {
+      fileLinkEl.innerHTML = `
+        <h4 style="color:#2E7D32;margin-bottom:10px;">ไฟล์งานที่ส่งแล้ว</h4>
+        <a href="${task.fileLink}" target="_blank" class="btn btn-secondary">
+          เปิดไฟล์งาน (PDF)
+        </a>`;
+      fileLinkEl.style.display = 'block';
+    } else {
+      fileLinkEl.innerHTML = '';
+      fileLinkEl.style.display = 'none';
+    }
+  }
 
+  // 3. Render Action Buttons
   if (actionsEl) {
     let html = "";
     if (String(task.assignedTo) === String(currentUser.id) && task.status !== "completed") {
@@ -1068,9 +1085,9 @@ function showTaskDetail(taskId) {
     ) {
       html += `<button class="btn btn-danger" data-action="delete">ลบงาน</button>`;
     }
-
     actionsEl.innerHTML = html;
 
+    // ... (event listeners เดิมสำหรับ start, complete, delete) ...
     actionsEl
       .querySelectorAll("button[data-action]")
       .forEach((btn) => {
@@ -1087,6 +1104,33 @@ function showTaskDetail(taskId) {
           btn.addEventListener("click", () => deleteTask(task.id, btn));
         }
       });
+  }
+  
+  // 4. Handle File Upload Area
+  if (fileUploadEl) {
+    const uploadBtn = document.getElementById("submitFileButton");
+    const fileInput = document.getElementById("taskFileInput");
+    const uploadStatus = document.getElementById("uploadStatus");
+
+    // รีเซ็ตค่าเก่า
+    fileInput.value = null;
+    uploadStatus.textContent = '';
+    
+    // แสดง/ซ่อน ส่วนอัปโหลด
+    if (String(task.assignedTo) === String(currentUser.id) && task.status !== "completed") {
+      fileUploadEl.style.display = 'block';
+    } else {
+      fileUploadEl.style.display = 'none';
+    }
+    
+    // ลบ listener เก่าออกก่อน
+    const newUploadBtn = uploadBtn.cloneNode(true);
+    uploadBtn.parentNode.replaceChild(newUploadBtn, uploadBtn);
+    
+    // เพิ่ม listener ใหม่
+    newUploadBtn.addEventListener('click', () => {
+      handleFileSubmit(task.id, fileInput, uploadStatus);
+    });
   }
 
   openModal("taskDetailModal");
@@ -1151,6 +1195,71 @@ async function deleteTask(taskId, btnEl) {
   } finally {
     isLoading = false;
     btnEl.dataset.confirmed = "";
+  }
+}
+
+// (ฟังก์ชันใหม่)
+async function handleFileSubmit(taskId, fileInput, statusEl) {
+  if (isLoading) return;
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showToast("กรุณาเลือกไฟล์ PDF", "error");
+    return;
+  }
+
+  if (file.type !== "application/pdf") {
+    showToast("กรุณาเลือกไฟล์ .pdf เท่านั้น", "error");
+    return;
+  }
+
+  if (file.size > 10 * 1024 * 1024) { // จำกัดขนาดไฟล์ 10MB
+    showToast("ไฟล์ต้องมีขนาดไม่เกิน 10MB", "error");
+    return;
+  }
+  
+  isLoading = true;
+  statusEl.textContent = 'กำลังอัปโหลด...';
+
+  try {
+    // 1. อ่านไฟล์เป็น Base64
+    const fileData = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+
+    // 2. สร้าง payload
+    const payload = {
+      action: "uploadFile",
+      taskId: taskId,
+      fileName: file.name,
+      mimeType: file.type,
+      fileData: fileData,
+    };
+
+    // 3. ส่งไปที่ API (doPost)
+    const resultTask = await apiPost(payload);
+    
+    // 4. อัปเดตข้อมูลใน allData (สำคัญมาก)
+    const taskIndex = allData.findIndex(t => t.type === 'task' && String(t.id) === String(taskId));
+    if (taskIndex > -1) {
+      allData[taskIndex] = { ...allData[taskIndex], ...resultTask };
+    }
+
+    showToast("อัปโหลดไฟล์สำเร็จ", "success");
+    statusEl.textContent = 'อัปโหลดสำเร็จ!';
+    
+    // รีเฟรชหน้าต่างรายละเอียดงานเพื่อแสดงลิงก์
+    showTaskDetail(taskId); 
+
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || "เกิดข้อผิดพลาดในการอัปโหลด", "error");
+    statusEl.textContent = 'อัปโหลดล้มเหลว';
+  } finally {
+    isLoading = false;
   }
 }
 
