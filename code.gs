@@ -1,5 +1,6 @@
 // ================== CONFIG ==================
 const SPREADSHEET_ID = '1-Ora8jkyiG6RJVN4G0rRGOhyhyATVaYf9uTA5lotMjw'; // TODO: แก้เป็น ID ของ Google Sheet
+const DRIVE_FOLDER_ID = '1FWMUYp4zKSvCf8z1wUuQqKr5SOx0Db-M?usp';
 
 const SHEET_USERS = 'Users';
 const SHEET_TASKS = 'Tasks';
@@ -183,6 +184,7 @@ function createTask(task) {
     task.status,
     task.createdAt,
     task.completedAt || '',
+    task.fileLink || '', // 👈 เพิ่มบรรทัดนี้ (คอลัมน์ K)
   ];
   sh.appendRow(row);
   return task;
@@ -298,6 +300,8 @@ function doPost(e) {
       result = updateItem(payload.entity, payload.item);
     } else if (action === 'delete') {
       result = deleteItem(payload.entity, payload.item);
+    } else if (action === 'uploadFile') { // 👈 เพิ่มส่วนนี้
+      result = handleUpload(payload);
     } else {
       throw new Error('Unknown action: ' + action);
     }
@@ -307,4 +311,69 @@ function doPost(e) {
     Logger.log('doPost error: ' + err);
     return jsonOutput({ ok: false, error: String(err) });
   }
+}
+
+// ================== FILE UPLOAD ==================
+function handleUpload(payload) {
+  if (!DRIVE_FOLDER_ID) {
+    throw new Error('DRIVE_FOLDER_ID is not set in code.gs');
+  }
+
+  const { fileData, fileName, mimeType, taskId } = payload;
+  if (!fileData || !fileName || !mimeType || !taskId) {
+    throw new Error('Missing file upload parameters');
+  }
+
+  // 1. ถอดรหัส Base64
+  const decoded = Utilities.base64Decode(fileData);
+  const blob = Utilities.newBlob(decoded, mimeType, fileName);
+
+  // 2. สร้างไฟล์ใน Drive
+  const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); // ตั้งค่าการแชร์
+  const fileUrl = file.getUrl();
+
+  // 3. อัปเดตชีต
+  const sh = getSheet(SHEET_TASKS);
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+
+  // หาคอลัมน์ fileLink (ควรจะเป็น K หรือ index 10)
+  const fileLinkIndex = headers.indexOf('fileLink');
+  if (fileLinkIndex === -1) {
+    throw new Error('Column "fileLink" not found in Tasks sheet');
+  }
+
+  // หาแถวของ Task
+  let rowIndex = -1;
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]) === String(taskId)) {
+      rowIndex = i + 1; // 1-based index
+      break;
+    }
+  }
+
+  if (rowIndex === -1) {
+    throw new Error('Task ID not found: ' + taskId);
+  }
+
+  // 4. บันทึกลิงก์ลงชีต
+  sh.getRange(rowIndex, fileLinkIndex + 1).setValue(fileUrl);
+
+  // คืนค่า Task ที่อัปเดตแล้ว
+  const task = getRowAsObject(sh, rowIndex);
+  task.type = 'task';
+  return task;
+}
+
+// ฟังก์ชัน helper (ต้องเพิ่มใหม่)
+function getRowAsObject(sheet, rowIndex) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const obj = {};
+  headers.forEach((h, idx) => {
+    if (h) obj[h] = rowValues[idx];
+  });
+  return obj;
 }
