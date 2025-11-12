@@ -194,41 +194,16 @@ function initLoginPage() {
       allData = await apiGetAll();
       let allUsers = getAllUsers();
 
-      // 1) เช็ค testAccounts ก่อน ถ้าเจอและยังไม่มีในชีต -> สร้าง user ใหม่
-      const testAcc = testAccounts.find(
-        (acc) => acc.username === username && acc.password === password
+      // 1) เช็ค users ปกติ (ลบส่วน testAccounts ออก)
+      const user = allUsers.find(
+        (u) => u.username === username && String(u.password) === password
       );
-
-      if (testAcc) {
-        let existing = allUsers.find((u) => u.username === username);
-        if (!existing) {
-          const newUser = {
-            id: String(Date.now()),
-            type: "user",
-            username: testAcc.username,
-            password: testAcc.password,
-            fullName: testAcc.fullName,
-            role: testAcc.role,
-            department: testAcc.department,
-            createdAt: new Date().toISOString(),
-          };
-          await apiCreate("user", newUser);
-          await loadAllDataAndRefresh();
-          allUsers = getAllUsers();
-          existing = allUsers.find((u) => u.username === username);
-        }
-
-        currentUser = existing;
-      } else {
-        // 2) เช็ค users ปกติ
-        const user = allUsers.find(
-          (u) => u.username === username && String(u.password) === password
-        );
-        if (!user) {
-          throw new Error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
-        }
-        currentUser = user;
+      
+      if (!user) {
+        throw new Error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       }
+      currentUser = user;
+
 
       // เก็บ currentUser ใน localStorage
       localStorage.setItem("currentUser", JSON.stringify(currentUser));
